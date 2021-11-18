@@ -23,7 +23,11 @@ RUN mkdir -p lib64 && cp /lib64/ld-linux-x86-64.so.2 lib64/
 
 RUN mkdir /data && cp /build/deploy/cortex-tenant.yml /data/cortex-tenant.yml
 
-FROM scratch
+# FROM scratch
+FROM alpine:latest 
+
+RUN apk add --no-cache bash
+
 
 ENV CONFIG_FILE /data/cortex-tenant.yml
 COPY --chown=65534:0 --from=builder /dist /
