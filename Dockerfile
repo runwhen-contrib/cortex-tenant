@@ -16,6 +16,7 @@ RUN make build
 WORKDIR /dist
 
 RUN cp /build/cortex-tenant ./cortex-tenant
+ADD entrypoint .
 
 RUN ldd cortex-tenant | tr -s '[:blank:]' '\n' | grep '^/' | \
     xargs -I % sh -c 'mkdir -p $(dirname ./%); cp % ./%;'
@@ -40,5 +41,5 @@ WORKDIR /data
 COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # ENTRYPOINT ["/cortex-tenant"]
 # CMD ["-config", "$CONFIG_PATH"]
-ADD entrypoint.sh .
+
 ENTRYPOINT ["entrypoint.sh"]
