@@ -51,6 +51,16 @@ jobs:
           image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
           echo ::set-output name=image_path::$image
 
+      - name: Set up Cloud SDK for Beta
+        uses: google-github-actions/setup-gcloud@v0.6.0
+        with:
+          project_id: ${{ env.BETA_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+          export_default_credentials: true
+
+      - name: Configure docker for GCP
+        run: gcloud --quiet auth configure-docker
+
       # Push the Docker image to BETA Google Container Registry
       - name: Publish BETA
         id: publish-beta
