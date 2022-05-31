@@ -7,6 +7,7 @@ on:
 
 env:
   PROJECT_ID: project-468-304505
+  BETA_PROJECT_ID: runwhen-nonprod-beta
   IMAGE: cortex-tenant
 
 jobs:
@@ -48,6 +49,14 @@ jobs:
         run: |-
           docker push "gcr.io/$PROJECT_ID/$IMAGE:$TAG"
           image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
+          echo ::set-output name=image_path::$image
+
+      # Push the Docker image to BETA Google Container Registry
+      - name: Publish
+        id: publish
+        run: |-
+          docker push "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
+          image="gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
           echo ::set-output name=image_path::$image
 
   notify-slack: 
