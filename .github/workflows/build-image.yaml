@@ -52,8 +52,8 @@ jobs:
           echo ::set-output name=image_path::$image
 
       # Push the Docker image to BETA Google Container Registry
-      - name: Publish
-        id: publish
+      - name: Publish BETA
+        id: publish-beta
         run: |-
           docker push "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
           image="gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
