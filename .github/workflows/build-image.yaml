@@ -55,6 +55,7 @@ jobs:
       - name: Publish BETA
         id: publish-beta
         run: |-
+          docker tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
           docker push "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
           image="gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
           echo ::set-output name=image_path::$image
