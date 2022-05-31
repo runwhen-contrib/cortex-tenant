@@ -64,7 +64,8 @@ jobs:
       - name: Publish BETA
         id: publish-beta
         run: |-
-          gcloud auth list
+          echo ${{ secrets.GCLOUD_SERVICE_KEY }} > gcr-sa.json
+          gcloud auth activate-service-account --key-file gcr-sa.json --project runwhen-nonprod-beta
           gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin gcr.io
           docker tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
           docker push "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
