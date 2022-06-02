@@ -54,6 +54,7 @@ jobs:
         run: |-
           docker push "gcr.io/$PROJECT_ID/$IMAGE:$TAG"
           image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
+          unset     CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE GOOGLE_APPLICATION_CREDENTIALS CLOUDSDK_PROJECT CLOUDSDK_CORE_PROJECT GCP_PROJECT GCLOUD_PROJECT GOOGLE_CLOUD_PROJECT
           echo ::set-output name=image_path::$image
 
       # - name: Set up Cloud SDK
