@@ -28,52 +28,44 @@ jobs:
       #     project_id: ${{ env.GCP_PROJECT_ID }}
       #     service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
       #     export_default_credentials: true
-    #   - id: 'auth-project-468'
-    #     name: 'Authenticate to Google Cloud'
-    #     uses: 'google-github-actions/auth@v0.4.0'
-    #     with:
-    #         credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
+      - id: 'auth-project-468'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0.4.0'
+        with:
+            credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
 
-    #   - name: Configure docker for GCP
-    #     run: gcloud --quiet auth configure-docker
+      - name: Configure docker for GCP
+        run: gcloud --quiet auth configure-docker
       
-    #   - name: Set tag to branch name
-    #     run: |-
-    #       echo "TAG=$(echo $GITHUB_REF_NAME | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
+      - name: Set tag to branch name
+        run: |-
+          echo "TAG=$(echo $GITHUB_REF_NAME | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
 
 
-    # # Build the Docker image
-    #   - name: Build
-    #     run: |-
-    #       docker build \
-    #         --tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" \
-    #         --build-arg GITHUB_SHA="$GITHUB_SHA" \
-    #         --build-arg GITHUB_REF="$GITHUB_REF" \
-    #         -f Dockerfile .           
+    # Build the Docker image
+      - name: Build
+        run: |-
+          docker build \
+            --tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" \
+            --build-arg GITHUB_SHA="$GITHUB_SHA" \
+            --build-arg GITHUB_REF="$GITHUB_REF" \
+            -f Dockerfile .           
   
 
-    #   # Push the Docker image to Google Container Registry
-    #   - name: Publish
-    #     id: publish
-    #     run: |-
-    #       docker push "gcr.io/$PROJECT_ID/$IMAGE:$TAG"
-    #       image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
-    #       unset     CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE GOOGLE_APPLICATION_CREDENTIALS CLOUDSDK_PROJECT CLOUDSDK_CORE_PROJECT GCP_PROJECT GCLOUD_PROJECT GOOGLE_CLOUD_PROJECT
-    #       echo ::set-output name=image_path::$image
-
-      # - name: Set up Cloud SDK
-      #   uses: google-github-actions/setup-gcloud@v0.6.0
-      #   with:
-      #     project_id: ${{ env.BETA_PROJECT_ID }}
-      #     service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-      #     export_default_credentials: true
+      # Push the Docker image to Google Container Registry
+      - name: Publish
+        id: publish
+        run: |-
+          docker push "gcr.io/$PROJECT_ID/$IMAGE:$TAG"
+          image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
+          echo ::set-output name=image_path::$image
 
       - id: 'auth-runwhen'
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0.4.0'
         with:
-          workload_identity_provider: 'projects/382862477443/locations/global/workloadIdentityPools/github-actions-pool'
-          service_account: 'svc-gha-runwhen-nonprod-beta@runwhen-nonprod-beta.iam.gserviceaccount.com'
+          workload_identity_provider: ${{ secrets.RUNWHEN_BETA_WI_POOL }}
+          service_account: ${{ secrets.RUNWHEN_BETA_WI_SA }}
 
       - name: Configure docker for GCP
         run: gcloud --quiet auth configure-docker
@@ -81,8 +73,6 @@ jobs:
       - name: Publish BETA
         id: publish-beta
         run: |-
-          echo ${{ secrets.GCLOUD_SERVICE_KEY }} > gcr-sa.json
-          gcloud auth activate-service-account --key-file gcr-sa.json --project runwhen-nonprod-beta
           gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin gcr.io
           docker tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
           docker push "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
