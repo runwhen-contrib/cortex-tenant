@@ -100,7 +100,7 @@ jobs:
         run: |-
           docker push "gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
           image="gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
-          echo ::set-output name=image_path::$image
+   
 
   notify-slack: 
     needs: build-and-push-to-gcr
