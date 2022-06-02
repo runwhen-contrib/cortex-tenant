@@ -56,12 +56,19 @@ jobs:
           image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
           echo ::set-output name=image_path::$image
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0.6.0
+      # - name: Set up Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v0.6.0
+      #   with:
+      #     project_id: ${{ env.BETA_PROJECT_ID }}
+      #     service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+      #     export_default_credentials: true
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0.4.0'
         with:
-          project_id: ${{ env.BETA_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          export_default_credentials: true
+          workload_identity_provider: 'projects/382862477443/locations/global/workloadIdentityPools/github-actions-pool'
+          service_account: 'svc-gha-runwhen-nonprod-beta@runwhen-nonprod-beta.iam.gserviceaccount.com'                                      ````````````````````````````````````````````````                                                    -468-304505.iam.gserviceaccount.com'
 
       - name: Configure docker for GCP
         run: gcloud --quiet auth configure-docker
