@@ -10,6 +10,10 @@ env:
   BETA_PROJECT_ID: runwhen-nonprod-beta
   IMAGE: cortex-tenant
 
+permissions:
+    contents: 'read'
+    id-token: 'write'
+
 jobs:
   build-and-push-to-gcr:
     runs-on: ubuntu-latest
