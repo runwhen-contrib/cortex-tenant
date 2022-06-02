@@ -72,10 +72,10 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0.4.0'
         with:
-          # workload_identity_provider: ${{ secrets.RUNWHEN_BETA_WI_POOL }}
-          # service_account: ${{ secrets.RUNWHEN_BETA_WI_SA }}
-          workload_identity_provider: "projects/382862477443/locations/global/workloadIdentityPools/github-actions-pool/providers/github"
-          service_account: "svc-gha-runwhen-nonprod-beta@runwhen-nonprod-beta.iam.gserviceaccount.com"
+          workload_identity_provider: ${{ secrets.RUNWHEN_BETA_WI_PROVIDER }}
+          service_account: ${{ secrets.RUNWHEN_BETA_WI_SA }}
+          # workload_identity_provider: "projects/382862477443/locations/global/workloadIdentityPools/github-actions-pool/providers/github"
+          # service_account: "svc-gha-runwhen-nonprod-beta@runwhen-nonprod-beta.iam.gserviceaccount.com"
 
       - name: Configure docker for GCP
         run: gcloud --quiet auth configure-docker
