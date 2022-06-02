@@ -57,15 +57,17 @@ jobs:
 
       - name: Notify Slack of Container Build
         id: slack
-        uses: slackapi/slack-github-action@v1.15.0
+        uses: slackapi/slack-github-action@v1.19.0
         with:
           channel-id: '#notifications'  # Slack channel id or name to post message. https://api.slack.com/methods/chat.postMessage#channels
-          slack-message: "Just Pushed to gcr.io/${{ env.GCP_PROJECT }/${{ env.IMAGE }}:${{ env.TAG }}"
+          slack-message: "Just Pushed to gcr.io/${{ env.GCP_PROJECT }}/${{ env.IMAGE }}:${{ env.TAG }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
   build-and-push-to-gcr-beta:
     runs-on: ubuntu-latest
+    outputs:
+      image_path: ${{ steps.publish-beta.outputs.image_path }}
     steps:
       - uses: actions/checkout@v2 
       - id: 'auth-runwhen'
@@ -102,10 +104,10 @@ jobs:
    
       - name: Notify Slack of Container Build
         id: slack-beta
-        uses: slackapi/slack-github-action@v1.15.0
+        uses: slackapi/slack-github-action@v1.19.0
         with:
           channel-id: '#notifications'  # Slack channel id or name to post message. https://api.slack.com/methods/chat.postMessage#channels
-          slack-message: 'Just Pushed to gcr.io/${{ env.GCP_PROJECT }/${{ env.IMAGE }}:${{ env.TAG }}'
+          slack-message: 'Just Pushed to gcr.io/${{ env.GCP_PROJECT }}/${{ env.IMAGE }}:${{ env.TAG }}'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         
@@ -119,5 +121,18 @@ jobs:
   #       with:
   #         channel-id: '#notifications'  # Slack channel id or name to post message. https://api.slack.com/methods/chat.postMessage#channels
   #         slack-message: 'Just Pushed to ${{needs.build-and-push-to-gcr.outputs.image_path}}'
+  #       env:
+  #         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  # notify-slack-beta: 
+  #   needs: build-and-push-to-gcr-beta
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Notify Slack of Container Build
+  #       id: slack
+  #       uses: slackapi/slack-github-action@v1.15.0
+  #       with:
+  #         channel-id: '#notifications'  # Slack channel id or name to post message. https://api.slack.com/methods/chat.postMessage#channels
+  #         slack-message: 'Just Pushed to ${{needs.build-and-push-to-gcr-beta.outputs.image_path}}'
   #       env:
   #         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
