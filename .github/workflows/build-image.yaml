@@ -24,38 +24,38 @@ jobs:
       #     project_id: ${{ env.GCP_PROJECT_ID }}
       #     service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
       #     export_default_credentials: true
-      - id: 'auth-project-468'
-        name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v0.4.0'
-        with:
-            credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
+    #   - id: 'auth-project-468'
+    #     name: 'Authenticate to Google Cloud'
+    #     uses: 'google-github-actions/auth@v0.4.0'
+    #     with:
+    #         credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
 
-      - name: Configure docker for GCP
-        run: gcloud --quiet auth configure-docker
+    #   - name: Configure docker for GCP
+    #     run: gcloud --quiet auth configure-docker
       
-      - name: Set tag to branch name
-        run: |-
-          echo "TAG=$(echo $GITHUB_REF_NAME | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
+    #   - name: Set tag to branch name
+    #     run: |-
+    #       echo "TAG=$(echo $GITHUB_REF_NAME | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
 
 
-    # Build the Docker image
-      - name: Build
-        run: |-
-          docker build \
-            --tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" \
-            --build-arg GITHUB_SHA="$GITHUB_SHA" \
-            --build-arg GITHUB_REF="$GITHUB_REF" \
-            -f Dockerfile .           
+    # # Build the Docker image
+    #   - name: Build
+    #     run: |-
+    #       docker build \
+    #         --tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" \
+    #         --build-arg GITHUB_SHA="$GITHUB_SHA" \
+    #         --build-arg GITHUB_REF="$GITHUB_REF" \
+    #         -f Dockerfile .           
   
 
-      # Push the Docker image to Google Container Registry
-      - name: Publish
-        id: publish
-        run: |-
-          docker push "gcr.io/$PROJECT_ID/$IMAGE:$TAG"
-          image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
-          unset     CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE GOOGLE_APPLICATION_CREDENTIALS CLOUDSDK_PROJECT CLOUDSDK_CORE_PROJECT GCP_PROJECT GCLOUD_PROJECT GOOGLE_CLOUD_PROJECT
-          echo ::set-output name=image_path::$image
+    #   # Push the Docker image to Google Container Registry
+    #   - name: Publish
+    #     id: publish
+    #     run: |-
+    #       docker push "gcr.io/$PROJECT_ID/$IMAGE:$TAG"
+    #       image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
+    #       unset     CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE GOOGLE_APPLICATION_CREDENTIALS CLOUDSDK_PROJECT CLOUDSDK_CORE_PROJECT GCP_PROJECT GCLOUD_PROJECT GOOGLE_CLOUD_PROJECT
+    #       echo ::set-output name=image_path::$image
 
       # - name: Set up Cloud SDK
       #   uses: google-github-actions/setup-gcloud@v0.6.0
