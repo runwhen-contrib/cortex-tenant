@@ -41,25 +41,33 @@ jobs:
         run: |-
           echo "TAG=$(echo $GITHUB_REF_NAME | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
 
-
     # Build the Docker image
       - name: Build
         run: |-
           docker build \
-            --tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" \
+            --tag "gcr.io/$GCP_PROJECT/$IMAGE:$TAG" \
             --build-arg GITHUB_SHA="$GITHUB_SHA" \
             --build-arg GITHUB_REF="$GITHUB_REF" \
             -f Dockerfile .           
-  
 
-      # Push the Docker image to Google Container Registry
-      - name: Publish
-        id: publish
+      - name: Configure docker for GCP
+        run: gcloud --quiet auth configure-docker
+
+      # Push the Docker image to BETA Google Container Registry
+      - name: Publish BETA
+        id: publish-beta
         run: |-
-          docker push "gcr.io/$PROJECT_ID/$IMAGE:$TAG"
-          image="gcr.io/$PROJECT_ID/$IMAGE:$TAG"
+          docker push "gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
+          image="gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
           echo ::set-output name=image_path::$image
 
+
+ build-and-push-to-gcr-beta:
+    runs-on: ubuntu-latest
+    outputs:
+      image_path: ${{ steps.publish.outputs.image_path }}
+    steps:
+      - uses: actions/checkout@v2 
       - id: 'auth-runwhen'
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0.4.0'
@@ -69,14 +77,30 @@ jobs:
 
       - name: Configure docker for GCP
         run: gcloud --quiet auth configure-docker
+      
+      - name: Set tag to branch name
+        run: |-
+          echo "TAG=$(echo $GITHUB_REF_NAME | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
+
+
+    # Build the Docker image
+      - name: Build
+        run: |-
+          docker build \
+            --tag "gcr.io/$GCP_PROJECT/$IMAGE:$TAG" \
+            --build-arg GITHUB_SHA="$GITHUB_SHA" \
+            --build-arg GITHUB_REF="$GITHUB_REF" \
+            -f Dockerfile .           
+
+      - name: Configure docker for GCP
+        run: gcloud --quiet auth configure-docker
 
       # Push the Docker image to BETA Google Container Registry
       - name: Publish BETA
         id: publish-beta
         run: |-
-          docker tag "gcr.io/$PROJECT_ID/$IMAGE:$TAG" "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
-          docker push "gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
-          image="gcr.io/$BETA_PROJECT_ID/$IMAGE:$TAG"
+          docker push "gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
+          image="gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
           echo ::set-output name=image_path::$image
 
   notify-slack: 
