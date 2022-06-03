@@ -49,7 +49,7 @@ jobs:
 
       # Push the Docker image to BETA Google Container Registry
       - name: Publish DEV
-        id: publish-beta
+        id: publish-dev
         run: |-
           docker push "gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
           image="gcr.io/$GCP_PROJECT/$IMAGE:$TAG"
