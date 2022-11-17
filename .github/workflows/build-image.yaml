@@ -9,6 +9,7 @@ env:
   PROJECT_ID: project-468-304505
   BETA_PROJECT_ID: runwhen-nonprod-beta
   IMAGE: cortex-tenant
+  SHARED_ARTIFACT_REPOSITORY_PATH: "us-docker.pkg.dev/runwhen-nonprod-shared/private-platform-images"
 
 permissions:
     contents: 'read'
@@ -108,6 +109,45 @@ jobs:
         with:
           channel-id: '#notifications'  # Slack channel id or name to post message. https://api.slack.com/methods/chat.postMessage#channels
           slack-message: 'Just Pushed to gcr.io/${{ env.GCP_PROJECT }}/${{ env.IMAGE }}:${{ env.TAG }}'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  build-and-push-to-shared-artifact-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 
+      - id: 'auth-runwhen'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0.4.0'
+        with:
+          workload_identity_provider: ${{ secrets.RUNWHEN_NONPROD_SHARED_WI_PROVIDER }}
+          service_account: ${{ secrets.RUNWHEN_NONPROD_SHARED_WI_SA }}
+
+      - name: Set tag to branch name
+        run: |-
+          echo "TAG=$(echo $GITHUB_REF_NAME | sed 's/[^a-zA-Z0-9]/-/g')-${GITHUB_SHA::8}" >> $GITHUB_ENV
+      # Build the Docker image
+      - name: Build
+        run: |-
+          docker build \
+            --tag "${{env.SHARED_ARTIFACT_REPOSITORY_PATH }}/$IMAGE:$TAG" \
+            --build-arg GITHUB_SHA="$GITHUB_SHA" \
+            --build-arg GITHUB_REF="$GITHUB_REF" \
+            -f Dockerfile .           
+      - name: Configure docker for GCP
+        run: gcloud --quiet auth configure-docker us-docker.pkg.dev
+
+      - name: Publish NonProd Shared Artifact Repo
+        id: publish-nonprod-shared-artifact-repo
+        run: |-
+          docker push "${{env.SHARED_ARTIFACT_REPOSITORY_PATH }}/$IMAGE:$TAG"
+   
+      - name: Notify Slack of Container Build
+        id: slack-publish-nonprod-shared-artifact-repo
+        uses: slackapi/slack-github-action@v1.19.0
+        with:
+          channel-id: '#notifications'  # Slack channel id or name to post message. https://api.slack.com/methods/chat.postMessage#channels
+          slack-message: 'Just Pushed to ${{env.SHARED_ARTIFACT_REPOSITORY_PATH }}/${{ env.IMAGE }}:${{ env.TAG }}'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         
