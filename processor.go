@@ -102,8 +102,16 @@ func (p *processor) handle(ctx *fh.RequestCtx) {
 		return
 	}
 
-	if !bytes.Equal(ctx.Path(), []byte("/push")) {
-		ctx.SetStatusCode(fh.StatusNotFound)
+    if !bytes.Equal(ctx.Path(), []byte("/push")) {
+        ctx.SetStatusCode(fh.StatusNotFound)
+        return
+    }
+
+	// Extract CN from the certificate
+	sslCertEncoded := string(ctx.Request.Header.Peek("X-SSL-CERT"))
+	cn, err := ExtractCNFromCert(sslCertEncoded)
+	if err != nil {
+		ctx.Error(fmt.Sprintf("Failed to extract CN from certificate: %v", err), fh.StatusBadRequest)
 		return
 	}
 
@@ -126,7 +134,7 @@ func (p *processor) handle(ctx *fh.RequestCtx) {
 	clientIP := ctx.RemoteAddr()
 	reqID, _ := uuid.NewRandom()
 
-	m, err := p.createWriteRequests(wrReqIn)
+	m, err := p.createWriteRequests(wrReqIn, cn)
 	if err != nil {
 		ctx.Error(err.Error(), fh.StatusBadRequest)
 		return
@@ -163,14 +171,14 @@ func (p *processor) handle(ctx *fh.RequestCtx) {
 	return
 }
 
-func (p *processor) createWriteRequests(wrReqIn *prompb.WriteRequest) (map[string]*prompb.WriteRequest, error) {
+func (p *processor) createWriteRequests(wrReqIn *prompb.WriteRequest, cn string) (map[string]*prompb.WriteRequest, error) {
 	// Create per-tenant write requests
 	m := map[string]*prompb.WriteRequest{}
 
 	for _, ts := range wrReqIn.Timeseries {
 		tenant, err := p.processTimeseries(&ts)
-		if err != nil {
-			return nil, err
+		if err != nil || tenant != cn  {
+            return nil, fmt.Errorf("tenant label '%s' does not match CN '%s' or failed to extract tenant", tenant, cn)
 		}
 
 		wrReqOut, ok := m[tenant]
