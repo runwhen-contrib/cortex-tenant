@@ -109,7 +109,10 @@ func (p *processor) handle(ctx *fh.RequestCtx) {
 
 	// Extract CN from the certificate
 	sslCertEncoded := string(ctx.Request.Header.Peek("X-SSL-CERT"))
+	// fmt.Printf("cn: %v", sslCertEncoded)
+
 	cn, err := ExtractCNFromCert(sslCertEncoded)
+	// fmt.Printf("cn: %v", cn)
 	if err != nil {
 		ctx.Error(fmt.Sprintf("Failed to extract CN from certificate: %v", err), fh.StatusBadRequest)
 		return
