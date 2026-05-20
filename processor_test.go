@@ -345,7 +345,10 @@ func Test_createWriteRequests(t *testing.T) {
 	p, err := createProcessor()
 	assert.Nil(t, err)
 
-	m, err := p.createWriteRequests(testWRQ)
+	// CN validation is off in testConfig, so the cn argument is ignored
+	// and a mixed-tenant WriteRequest must round-trip unchanged. This
+	// preserves the upstream blind-oracle/cortex-tenant assertion shape.
+	m, err := p.createWriteRequests(testWRQ, "")
 	assert.Nil(t, err)
 
 	mExp := map[string]*prompb.WriteRequest{

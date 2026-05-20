@@ -8,3 +8,15 @@ tenant:
   label_remove: true
   header: X-Scope-OrgID
   default: default
+
+# Optional mTLS-CN-equals-tenant gate. When `enabled: false` (the
+# default) the proxy behaves identically to upstream blind-oracle/
+# cortex-tenant. When `enabled: true`, every /push request must carry
+# a PEM-encoded client certificate in `header`, and every timeseries'
+# resolved tenant label must equal the certificate Subject CN — this
+# prevents a client authenticated as tenant A from writing samples
+# labelled for tenant B. Typically used behind an mTLS-terminating
+# ingress (e.g. nginx with `proxy_set_header X-SSL-CERT $ssl_client_escaped_cert`).
+cn_validation:
+  enabled: false
+  header: X-SSL-CERT

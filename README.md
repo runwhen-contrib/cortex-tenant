@@ -72,7 +72,31 @@ tenant:
   # regardless of the response from Cortex. This can lose metrics if Cortex is
   # throwing rejections.
   accept_all: false
+
+# Optional: enforce that the resolved tenant label equals the Common
+# Name (CN) of the client certificate forwarded by an upstream mTLS-
+# terminating proxy. Default off = identical to upstream behavior.
+cn_validation:
+  enabled: false
+  # HTTP header carrying the PEM (raw or URL-encoded) client cert.
+  # Common upstreams: nginx `proxy_set_header X-SSL-CERT
+  # $ssl_client_escaped_cert;` or envoy `x-forwarded-client-cert`.
+  header: X-SSL-CERT
 ```
+
+### Optional: mTLS CN validation
+
+This is a downstream RunWhen fork addition (not in upstream
+blind-oracle/cortex-tenant). When `cn_validation.enabled: true`, the
+proxy reads a PEM-encoded client certificate from `cn_validation.header`
+and rejects any write request where a timeseries' resolved tenant label
+does not equal the certificate Subject CN.
+
+This is useful when running cortex-tenant behind an mTLS-terminating
+ingress: even if a misbehaving client mints a write request with a
+forged `tenant=other-tenant` label, the request is rejected because the
+client's cert CN cannot match more than one tenant. Default is **off**
+so the binary remains a drop-in replacement for the upstream image.
 
 ### Prometheus configuration example
 

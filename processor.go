@@ -123,10 +123,27 @@ func (p *processor) handle(ctx *fh.RequestCtx) {
 		return
 	}
 
+	// Optional mTLS-CN gate. When disabled (the default), cn stays empty
+	// and createWriteRequests skips the CN-vs-tenant comparison entirely,
+	// preserving upstream blind-oracle/cortex-tenant behavior.
+	var cn string
+	if p.cfg.CNValidation.Enabled {
+		sslCertEncoded := string(ctx.Request.Header.Peek(p.cfg.CNValidation.Header))
+		if sslCertEncoded == "" {
+			ctx.Error(fmt.Sprintf("CN validation enabled but '%s' header is missing", p.cfg.CNValidation.Header), fh.StatusBadRequest)
+			return
+		}
+		cn, err = ExtractCNFromCert(sslCertEncoded)
+		if err != nil {
+			ctx.Error(fmt.Sprintf("Failed to extract CN from certificate header '%s': %v", p.cfg.CNValidation.Header, err), fh.StatusBadRequest)
+			return
+		}
+	}
+
 	clientIP := ctx.RemoteAddr()
 	reqID, _ := uuid.NewRandom()
 
-	m, err := p.createWriteRequests(wrReqIn)
+	m, err := p.createWriteRequests(wrReqIn, cn)
 	if err != nil {
 		ctx.Error(err.Error(), fh.StatusBadRequest)
 		return
@@ -163,14 +180,26 @@ func (p *processor) handle(ctx *fh.RequestCtx) {
 	return
 }
 
-func (p *processor) createWriteRequests(wrReqIn *prompb.WriteRequest) (map[string]*prompb.WriteRequest, error) {
-	// Create per-tenant write requests
+// createWriteRequests groups the inbound timeseries by tenant label and
+// returns one WriteRequest per tenant.
+//
+// The `cn` argument is the Common Name extracted from the mTLS client
+// cert when CNValidation is enabled, or "" when it is disabled. When
+// CNValidation is enabled we additionally require every resolved tenant
+// to equal `cn` — preventing a client authenticated as tenant A from
+// writing samples labelled for tenant B. When CNValidation is disabled
+// the `cn` value is ignored.
+func (p *processor) createWriteRequests(wrReqIn *prompb.WriteRequest, cn string) (map[string]*prompb.WriteRequest, error) {
 	m := map[string]*prompb.WriteRequest{}
 
 	for _, ts := range wrReqIn.Timeseries {
 		tenant, err := p.processTimeseries(&ts)
 		if err != nil {
 			return nil, err
+		}
+
+		if p.cfg.CNValidation.Enabled && tenant != cn {
+			return nil, fmt.Errorf("tenant label '%s' does not match certificate CN '%s'", tenant, cn)
 		}
 
 		wrReqOut, ok := m[tenant]

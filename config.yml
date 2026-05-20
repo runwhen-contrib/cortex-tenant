@@ -13,3 +13,8 @@ tenant:
   header: X-Scope-OrgID
   default: ""
   accept_all: false
+
+# See README.md "CN validation". Default off = upstream behavior.
+cn_validation:
+  enabled: false
+  header: X-SSL-CERT

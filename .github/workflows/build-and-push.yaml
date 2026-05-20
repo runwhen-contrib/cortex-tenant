@@ -1,0 +1,109 @@
+name: Build and Push
+
+# Continuous build for the cortex-tenant container image.
+#
+# Builds on every PR (no push — verifies the Dockerfile still compiles
+# and the resulting binary boots) and pushes a `main-<sha>` tag on
+# every push to main. Date-tagged releases are cut from a separate,
+# manually-triggered workflow (see generate_release.yaml) so the
+# release cadence isn't tied to commit cadence.
+#
+# All pushes go to ghcr.io/runwhen-contrib/cortex-tenant — the same
+# public org as every other runwhen-contrib image (mcp-server,
+# cc-catalog-svc, etc.). Auth is the built-in `GITHUB_TOKEN` with
+# `packages: write` — no GCP service-account JSON or workload-identity
+# federation required.
+#
+# Platform: linux/amd64 only. RunWhen platform images are amd64-only
+# (matches the policy applied to runner-control / agentfarm / usearch /
+# 468-platform release workflows).
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "VERSION"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: runwhen-contrib/cortex-tenant
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test -race -timeout 120s ./...
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ${{ env.REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        # docker/metadata-action emits a multi-line `tags` output the
+        # build-push-action consumes. The chosen tags are deliberately
+        # narrow:
+        #   - PR builds: pr-<n>-<short-sha>  (built only, not pushed)
+        #   - main pushes: main-<short-sha> + main
+        # Release tags (YYYY-MM-DD.N) are cut by generate_release.yaml
+        # — not here — so a noisy push to main never accidentally
+        # produces a release-shaped tag.
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=main-{{sha}},enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=pr-${{ github.event.pull_request.number }}-{{sha}},enable=${{ github.event_name == 'pull_request' }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build (and push on main)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          # amd64 only — RunWhen platform-image policy. arm64 ~doubles
+          # build time and there's no consumer for it (every cortex-
+          # tenant deployment lands on amd64 GKE / EKS nodes).
+          platforms: linux/amd64
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            GITHUB_REF=${{ github.ref }}
+          # In-line buildkit cache cuts subsequent builds from ~3min
+          # to <30s when only the test layer changed.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
