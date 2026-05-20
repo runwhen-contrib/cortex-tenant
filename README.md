@@ -1,8 +1,16 @@
-# cortex-tenant
+# cortex-tenant (RunWhen fork)
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/blind-oracle/cortex-tenant)](https://goreportcard.com/report/github.com/blind-oracle/cortex-tenant)
-[![Coverage Status](https://coveralls.io/repos/github/blind-oracle/cortex-tenant/badge.svg?branch=main)](https://coveralls.io/github/blind-oracle/cortex-tenant?branch=main)
-[![Build Status](https://www.travis-ci.com/blind-oracle/cortex-tenant.svg?branch=main)](https://www.travis-ci.com/blind-oracle/cortex-tenant)
+> **Fork of [blind-oracle/cortex-tenant](https://github.com/blind-oracle/cortex-tenant)**
+> — a Prometheus remote-write proxy that routes timeseries to Cortex/Mimir
+> tenants based on label values.
+>
+> This `runwhen-contrib/cortex-tenant` fork was branched from upstream
+> at v1.4.0. It adds an **optional** mTLS-CN-equals-tenant gate
+> (`cn_validation`, default off) and ships from
+> `ghcr.io/runwhen-contrib/cortex-tenant`. With CN validation
+> disabled, this binary is a drop-in replacement for the upstream
+> image. Track upstream parity in
+> [docs/UPSTREAM-DIFF.md](docs/UPSTREAM-DIFF.md) (TBD).
 
 Prometheus remote write proxy which marks timeseries with a Cortex tenant ID based on labels.
 
