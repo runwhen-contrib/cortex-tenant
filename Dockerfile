@@ -1,4 +1,4 @@
-FROM golang:stretch as builder
+FROM golang:1.25-bookworm as builder
 
 ENV GO111MODULE=on \
     CGO_ENABLED=0
