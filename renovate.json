@@ -1,0 +1,80 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Renovate config for cortex-tenant — single Go module + Dockerfile. Pattern",
+    "derived from project-468/468-platform self-hosted renovate setup. Covers Go",
+    "module updates, Docker base-image bumps, and GitHub Actions. Requires the",
+    "self-hosted renovate workflow (renovate.yml) to be present."
+  ],
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)",
+    ":automergeDigest",
+    ":automergeBranch"
+  ],
+  "timezone": "America/Toronto",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rebaseWhen": "behind-base-branch",
+  "configMigration": true,
+  "minimumReleaseAge": "3 days",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "description": "Security fixes bypass the weekly schedule and ship as soon as a patched version exists.",
+    "enabled": true,
+    "labels": ["dependencies", "security"],
+    "schedule": ["at any time"],
+    "minimumReleaseAge": "0 days"
+  },
+  "dockerfile": {
+    "enabled": true
+  },
+  "gomod": {
+    "enabled": true
+  },
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Dependency Dashboard",
+  "dependencyDashboardHeader": "This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.",
+  "dependencyDashboardFooter": "- [ ] <!-- rebase-check -->If you want to rebase/retry any failed PRs, check this box",
+  "packageRules": [
+    {
+      "description": "Isolate major bumps into their own PRs (breaking risk) and give them a longer soak.",
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependencies", "major-update"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Group non-major Go module updates into one weekly PR.",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "go modules (non-major)"
+    },
+    {
+      "description": "Group GitHub Actions updates and auto-merge patch/pin bumps.",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": true,
+      "matchUpdateTypes": ["patch", "pin", "digest"]
+    },
+    {
+      "description": "Group Docker base images with a short soak for non-major.",
+      "matchManagers": ["dockerfile"],
+      "groupName": "Docker base images",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Docker major bumps get the standard 7-day soak.",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["major"],
+      "minimumReleaseAge": "7 days"
+    }
+  ]
+}
