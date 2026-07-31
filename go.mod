@@ -2,7 +2,7 @@ module github.com/blind-oracle/cortex-tenant
 
 go 1.25.0
 
-toolchain go1.25.7
+toolchain go1.25.12
 
 require (
 	github.com/blind-oracle/go-common v1.0.7
