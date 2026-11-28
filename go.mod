@@ -12,8 +12,8 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/prometheus v1.8.2-0.20210120113717-82330b96ee74
-	github.com/sirupsen/logrus v1.7.0
-	github.com/stretchr/testify v1.6.1
+	github.com/sirupsen/logrus v1.8.3
+	github.com/stretchr/testify v1.7.0
 	github.com/valyala/fasthttp v1.70.0
 	gopkg.in/yaml.v2 v2.4.0
 )
